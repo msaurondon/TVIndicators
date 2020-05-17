@@ -1,0 +1,8 @@
+//@version=4
+study("1 STD DEV",overlay=true)
+DailyRange =  (high + low)/2
+AverageTradedRange = ema(DailyRange,21)
+AverageSTDDEV = stdev(DailyRange,21)
+plot(AverageTradedRange,color=color.black)
+plot(close+AverageSTDDEV,offset=1)
+plot(close-AverageSTDDEV,offset=1)
