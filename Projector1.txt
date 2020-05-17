@@ -1,8 +1,9 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © LonesomeTheBlue
+// modifications and projections added by PriceProphet
 
 //@version=4
-study("Parabolic SAR DEV2", "SAR", overlay = true)
+study("Projection Set 1", "PS1", overlay = true)
 
 start = input(title = "Start", defval = 0.02, step = 0.001)
 increment = input(title = "Increment", defval = 0.02, step = 0.001)
@@ -28,8 +29,12 @@ float multi2 = 0.0
 float multi3 = 0.0
 float bullGap = 0.0
 float bearGap = 0.0
-bool debug = true
+bool debug = false
 float percentGain = 0.0
+
+truncate(number, decimals) =>
+    factor = pow(10, decimals)
+    int(number * factor) / factor
 
 
 trend := nz(trend[1])
@@ -203,19 +208,21 @@ if trend < 0 // bearish, SAR above
         target1:= rangePercent < .5 ? close[0] + multi3 : close[0] - multi2
         target2:= rangePercent < .5 ? close[0] - multi2 : 0.0
     node := node + '\n' + tostring(diff)
-    percentGain := close[0]/target1
 
 
+percentGain := ((target1/close[0]) -1) * 100
 plot(trendMA, title="Trend MA", color = color.white)
-plot(sar, title = "Parabolic SAR", color = trend > 0 ? color.green : color.lime, linewidth = 2, style = plot.style_circles)
+//plot(sar, title = "Parabolic SAR", color = trend > 0 ? color.green : color.lime, linewidth = 2, style = plot.style_circles)
+
+
+targetMessage = 'Price Target:\n'
+targetMessage := target2 > 0.0 ? targetMessage + '(1) ' + tostring(truncate(target2,2)) + '\n(2) ' + tostring(truncate(target1,2)) : targetMessage + '(1) ' + tostring(truncate(target1,2))
+targetMessage := targetMessage + '\nEst %\n~' + tostring(truncate(percentGain,2))
+targetMessage := debug ?  targetMessage + '\nnode: ' + node : targetMessage
 
 alertcondition(change(trend) > 0, title='PSAR Trend UP', message='PSAR Trend UP')
 alertcondition(change(trend) < 0, title='PSAR Trend DOWN', message='PSAR Trend DOWN')
 
-targetMessage = 'Price Target:\n'
-targetMessage := target2 > 0.0 ? targetMessage + '(1) ' + tostring(target2) + '\n(2) ' + tostring(target1) : targetMessage + '(1) ' + tostring(target1)
-targetMessage := targetMessage + '\nEst %\n~' + tostring(target1/close[0])
-targetMessage := debug ?  targetMessage + '\nnode: ' + node : targetMessage
 
 if change(trend) > 0 and putlabel
     label.new(bar_index, sar, color = target2 > 0.0 ? color.yellow : color.lime, style=label.style_labelup, size = size.normal, text=targetMessage)
