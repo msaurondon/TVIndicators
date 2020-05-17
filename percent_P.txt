@@ -1,4 +1,5 @@
 //@version=3
+
 study("%P")
 range = high-low
 sell = high-close
