@@ -1,0 +1,11 @@
+//@version=3
+study("%P")
+range = high-low
+sell = high-close
+buy = close - low
+sellpercent = sell/range
+buypercent = buy/range
+sellvol = volume * sellpercent
+buyvol = volume * buypercent
+plot(sellvol,color=red)
+plot(buyvol,color=green)
