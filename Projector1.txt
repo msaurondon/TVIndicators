@@ -22,6 +22,7 @@ float highestHigh = 0.0
 float lowestLow = 0.0
 float target1 = 0.0
 float target2 = 0.0
+float target3 = 0.0
 float diff = 0.0
 float rangePercent = 0.0
 string node = ''
@@ -42,6 +43,7 @@ ep := nz(ep[1])
 af :=nz(af[1])
 sar := sar[1]
 trendMA := ema(hl2,21)
+atr := sma(high[0] - low[0],21)
 
 
 if trend == 0 and not na(high[1])
@@ -88,8 +90,8 @@ consolidation := close[0] < highestHigh and close[0] > lowestLow ? true : false
 rangePercent := (high[0] - close[0])/(high[0] - low[0])
 
 
-if trend > 0 // bullish, SAR below
-    diff := high[0] - low[1]
+if trend > 0 or trend < 0 // bullish, SAR below
+    diff := trend > 0 ? high[0] - low[1] : high[1] - low[0]
     multi1 := diff * 1.618
     multi2 := diff * .618
     multi3 := diff * .382
@@ -97,6 +99,10 @@ if trend > 0 // bullish, SAR below
     bearGap := low[1] - high[0] > 0 ? low[1] - high[0] : 0.0
     if high[0] > high[1] and low[0] < low[1] // engulfing bar
         node := '1'
+        diff := high[0] - low[0]
+        multi1 := diff * 1.618
+        multi2 := diff * .618
+        multi3 := diff * .382
         if close[0] > trendMA[0] // above the trendMA
             node := node + 'a'
             if consolidation
@@ -111,6 +117,12 @@ if trend > 0 // bullish, SAR below
                 if rangePercent >= .75
                     target2 := close[0] - multi2
                     target1 := target2 + multi1
+            if (high[0] - low[0]) > atr * 1.618
+                node := node + '++'
+                if close[0] < low[1]
+                    target3 := close[0] - multi1
+                if close[0] > high[1]
+                    target3 := close[0] + multi1
         if close[0] < trendMA[0] // below the trendMA
             node := node + 'b'
             if consolidation
@@ -125,6 +137,12 @@ if trend > 0 // bullish, SAR below
                 if rangePercent <= .25
                     target2 := close[0] + multi2
                     target1 := target2 - multi1
+            if (high[0] - low[0]) > atr * 1.618
+                node := node + '--'
+                if close[0] < low[1]
+                    target3 := close[0] - multi1
+                if close[0] > high[1]
+                    target3 := close[0] + multi1
     if high[0] > high[1] and low[0] > low[1] and close[0] > high[1] // bullish trigger above SAR (with trend)
         node := '2'
         if consolidation
@@ -149,7 +167,7 @@ if trend > 0 // bullish, SAR below
             node := node + '+'
             if close[0] > trendMA
                 node := node + 'a'
-                target1 = close[0] - (multi3 - bearGap)
+                target1 := close[0] - (multi3 - bearGap)
             else
                 node := node + 'b'
                 target1:= close[0] - (multi2 - bearGap)
@@ -195,101 +213,28 @@ if trend > 0 // bullish, SAR below
             node := node + 'a'
             if rangePercent <= .5
                 node := node + '<'
-                target1 = close[0] + multi3
-                target2 = target1 - multi2
+                target1 := close[0] + multi3
+                target2 := target1 - multi2
             else
                 node := node + '>'
-                target1 = close - multi2
+                target1 := close - multi2
         else
             node := node + 'b'
             if rangePercent <= .5
                 node := node + '<'
-                target1 = close + multi2
+                target1 := close + multi2
             else
                 node := node + '>'
-                target1 = close + multi3
-                target2 = target1 - multi2
+                target1 := close + multi3
+                target2 := target1 - multi2
 
 
     node := node + '\n' + tostring(diff)
     percentGain := target2 > 0.0 ? target2/target1 : target1/close[0]
 
-if trend < 0 // bearish, SAR above
-    diff := high[1] - low[0]
-    multi1 := diff * 1.618
-    multi2 := diff * .618
-    multi3 := diff * .382
-    bullGap := high[1] - low[0]
-    bearGap := low[0] - high[1]
-    if high[0] > high[1] and low[0] < low[1] // engulfing bar
-        node := '1'
-        diff := high[0] - low[0]
-        if close[0] > trendMA[0] // above the trendMA
-            node := node + 'a'
-            if consolidation
-                node := node + '+'
-                target1 := close[0] + multi2
-                if rangePercent <= .25
-                    target2 := close[0] - multi3
-                    target1 := target2 + multi2
-            if not consolidation
-                node := node + '-'
-                target1 := close[0] + multi1
-                if rangePercent <= .25
-                    target2 := close[0] - multi2
-                    target1 := target2 + multi1
-        if close[0] < trendMA[0] // below the trendMA
-            node := node + 'b'
-            if consolidation
-                node := node + '+'
-                target1 := close[0] - multi2
-                if rangePercent <= .25
-                    target2 := close[0] + multi3
-                    target1 := target2 - multi2
-            if not consolidation
-                node := node + '-'
-                target1 := close[0] - multi1
-                if rangePercent <= .25
-                    target2 := close[0] + multi2
-                    target1 := target2 - multi1
-    if high[0] > high[1] and low[0] > low[1] and close[0] > high[1] // bullish trigger below SAR (with trend)
-        node := '2'
-        if consolidation
-            node := node + '+'
-            target1 := bullGap > 0.0 ? close[0] + (multi3 - bullGap) : close[0] + multi3
-        if not consolidation
-            node := node + '-'
-            target1 :=  bullGap > 0.0 ? close[0] + (multi2 - bullGap) : close[0] + multi2
-    if high[1] > high[0] and low[1] > low[0] and close[0] < low[1] // bearish trigger below SAR (with trend)
-        node := '3a'
-        if consolidation
-            node := node + '+'
-            if close[0] > trendMA
-                node := node + 'a'
-                target1:= bearGap > 0.0 ? close[0] - (multi3 - bearGap) : close[0] - multi3
-            else
-                node := node + 'b'
-                target1:= bearGap > 0.0 ? close[0] - (multi2 - bearGap) : close[0] - multi2
-        if not consolidation
-            node := node + '-'
-            target1:= bearGap > 0.0 ? close[0] - (multi1 - bearGap) : close[0] - multi1
-    if high[0] > high[1] and low[0] == low[1] and close[1] > close[0] and close[0] == low[1] // third bear trigger above SAR (w/ and against trend) -- it will always be in consolidation
-        node := '3b'
-        if consolidation
-            node := node + '+'
-            if close[0] > trendMA
-                node := node + 'a'
-                target1 = close[0] + multi3
-            else
-                node := node + 'b'
-                target1 = close[0] + multi2
-    if high[1] > high[0] and low[1] > low[0] and close[0] >= low[1]
-        node := '4'
-        target1:= rangePercent < .5 ? close[0] + multi3 : close[0] - multi2
-        target2:= target1 - multi2 //rangePercent < .5 ? close[0] - multi2 : 0.0
-    node := node + '\n' + tostring(diff)
 
 percentGain := target2 > 0.0 ? target2/target1 : target1/close[0]
+percentGain := target3 > 0.0 ? close[0]/target3 : percentGain
 percentGain := (percentGain - 1) * 100
 //percentGain := ((target1/close[0]) -1) * 100
 plot(trendMA, title="Trend MA", color = color.white)
@@ -298,6 +243,7 @@ plot(sar, title = "Parabolic SAR", color = trend > 0 ? color.green : color.lime,
 
 targetMessage = 'Price Target:\n'
 targetMessage := target2 > 0.0 ? targetMessage + '(1) ' + tostring(truncate(target1,2)) + '\n(2) ' + tostring(truncate(target2,2)) : targetMessage + '(1) ' + tostring(truncate(target1,2))
+targetMessage := target3 > 0.0 ? targetMessage + '\n(3)' + tostring(truncate(target3,2)) : targetMessage
 targetMessage := targetMessage + '\nEst %\n~' + tostring(truncate(percentGain,2))
 targetMessage := debug ?  targetMessage + '\nnode: ' + node : targetMessage
 
