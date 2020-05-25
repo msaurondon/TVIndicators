@@ -144,7 +144,7 @@ if trend > 0 // bullish, SAR below
                 node := node + 'b'
                 target1 :=  bullGap > 0.0 ? close[0] + (multi1 - bullGap) : close[0] + multi1
     if high[1] > high[0] and low[1] > low[0] and close[0] < low[1] // bearish trigger above SAR (against trend)
-        node := '3'
+        node := '3a'
         if consolidation
             node := node + '+'
             if close[0] > trendMA
@@ -161,6 +161,14 @@ if trend > 0 // bullish, SAR below
             else
                 node := node + 'b'
                 target1 := close[0] - multi2
+    if high[0] > high[1] and low[0] == low[1] and close[0] == low[1] // second bearish trigger below SAR (with/against trend) -- it will always be in consolidation
+        node := '3b+'
+        if close[0] > trendMA
+            node := node + 'a'
+            target1 = close[0] - multi2 // envelopes entire previous bar - strong negative push
+        else
+            node := node +'b'
+            target1 := close[0] - multi1 // envelopes entire previous bar - strong negative push
     if high[0] > high[1] and low[0] > low[1] and close[0] <= high[1] // bullish trigger above SAR (multi directional)
         node:='4'
         target2:= rangePercent > .5 ? close[0] - multi3 : 0.0
@@ -216,7 +224,7 @@ if trend < 0 // bearish, SAR above
             node := node + '-'
             target1 :=  bullGap > 0.0 ? close[0] + (multi2 - bullGap) : close[0] + multi2
     if high[1] > high[0] and low[1] > low[0] and close[0] < low[1] // bearish trigger below SAR (with trend)
-        node := '3'
+        node := '3a'
         if consolidation
             node := node + '+'
             if close[0] > trendMA
@@ -228,6 +236,16 @@ if trend < 0 // bearish, SAR above
         if not consolidation
             node := node + '-'
             target1:= bearGap > 0.0 ? close[0] - (multi1 - bearGap) : close[0] - multi1
+    if high[0] > high[1] and low[0] == low[1] and close[1] > close[0] and close[0] == low[1] // third bear trigger above SAR (w/ and against trend) -- it will always be in consolidation
+        node := '3b'
+        if consolidation
+            node := node + '+'
+            if close[0] > trendMA
+                node := node + 'a'
+                target1 = close[0] + multi3
+            else
+                node := node + 'b'
+                target1 = close[0] + multi2
     if high[1] > high[0] and low[1] > low[0] and close[0] >= low[1]
         node := '4'
         target1:= rangePercent < .5 ? close[0] + multi3 : close[0] - multi2
