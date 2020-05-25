@@ -93,8 +93,8 @@ if trend > 0 // bullish, SAR below
     multi1 := diff * 1.618
     multi2 := diff * .618
     multi3 := diff * .382
-    bullGap := low[0] - high[1]
-    bearGap := low[1] - high[0]
+    bullGap := low[0] - high[1] > 0 ? low[0] - high[1] : 0.0
+    bearGap := low[1] - high[0] > 0 ? low[1] - high[0] : 0.0
     if high[0] > high[1] and low[0] < low[1] // engulfing bar
         node := '1'
         if close[0] > trendMA[0] // above the trendMA
@@ -131,37 +131,37 @@ if trend > 0 // bullish, SAR below
             node := node + '+'
             if close[0] < trendMA
                 node:= node + 'a'
-                target1 := bullGap > 0.0 ? close[0] + (multi3 - bullGap) : close[0] + multi3
+                target1 := close[0] + (multi3 - bullGap)
             else
                 node := node + 'b'
-                target1 := bullGap > 0.0 ? close[0] + (multi2 - bullGap) : close[0] + multi2
+                target1 := close[0] + (multi2 - bullGap)
         if not consolidation
             node := node + '-'
             if close[0] < trendMA
                 node := node + 'a'
-                target1 := bullGap > 0.0 ? close[0] + (multi2 - bullGap) : close[0] + multi2
+                target1 := close[0] + (multi2 - bullGap)
             else
                 node := node + 'b'
-                target1 :=  bullGap > 0.0 ? close[0] + (multi1 - bullGap) : close[0] + multi1
+                target1 :=  close[0] + (multi1 - bullGap)
     if high[1] > high[0] and low[1] > low[0] and close[0] < low[1] // bearish trigger above SAR (against trend)
         node := '3a'
         if consolidation
             node := node + '+'
             if close[0] > trendMA
                 node := node + 'a'
-                target1 = close[0] - multi3
+                target1 = close[0] - (multi3 - bearGap)
             else
                 node := node + 'b'
-                target1:= close[0] - multi2
+                target1:= close[0] - (multi2 - bearGap)
         if not consolidation
             node := node + '-'
             if close[0] < trendMA
                 node := node + 'a'
-                target1:= close[0] - multi2
+                target1:= close[0] - (multi1 - bearGap)
             else
                 node := node + 'b'
-                target1 := close[0] - multi2
-    if high[0] > high[1] and low[0] == low[1] and close[0] == low[1] // second bearish trigger below SAR (with/against trend) -- it will always be in consolidation
+                target1 := close[0] - (multi2 - bearGap)
+    if high[0] > high[1] and low[0] == low[1] and  rangePercent > .75//close[0] == low[1] // second bearish trigger below SAR (with/against trend) -- it will always be in consolidation
         node := '3b+'
         if close[0] > trendMA
             node := node + 'a'
@@ -169,13 +169,50 @@ if trend > 0 // bullish, SAR below
         else
             node := node +'b'
             target1 := close[0] - multi1 // envelopes entire previous bar - strong negative push
-    if high[0] > high[1] and low[0] > low[1] and close[0] <= high[1] // bullish trigger above SAR (multi directional)
-        node:='4'
-        target2:= rangePercent > .5 ? close[0] - multi3 : 0.0
-        target1:= close[0] + multi2
+    if high[0] > high[1] and low[0] > low[1] and close[0] <= high[1] // bullish bounce trigger above SAR (multi directional)
+        node:='+4'
+        if close > trendMA
+            node := node + 'a'
+            if rangePercent >= .5
+                node := node + '>'
+                target1:= close[0] - multi3
+                target2:= target1 + multi2
+            else
+                node := node + '<'
+                target1 := close[0] + multi2
+        else
+            node := node + 'b'
+            if rangePercent >= .5
+                node := node + '>'
+                target1 := close[0] - multi2
+            else
+                node := node + '<'
+                target1 := close[0] - multi3
+                target2 := target1 + multi2
+    if high[0] < high[1] and low[0] < low[1] and close[0] >= low[1] // bearish bouncer trigger above SAR (multi directional)
+        node:='+5'
+        if close > trendMA
+            node := node + 'a'
+            if rangePercent <= .5
+                node := node + '<'
+                target1 = close[0] + multi3
+                target2 = target1 - multi2
+            else
+                node := node + '>'
+                target1 = close - multi2
+        else
+            node := node + 'b'
+            if rangePercent <= .5
+                node := node + '<'
+                target1 = close + multi2
+            else
+                node := node + '>'
+                target1 = close + multi3
+                target2 = target1 - multi2
+
 
     node := node + '\n' + tostring(diff)
-    percentGain := target1/close[0]
+    percentGain := target2 > 0.0 ? target2/target1 : target1/close[0]
 
 if trend < 0 // bearish, SAR above
     diff := high[1] - low[0]
@@ -249,17 +286,18 @@ if trend < 0 // bearish, SAR above
     if high[1] > high[0] and low[1] > low[0] and close[0] >= low[1]
         node := '4'
         target1:= rangePercent < .5 ? close[0] + multi3 : close[0] - multi2
-        target2:= rangePercent < .5 ? close[0] - multi2 : 0.0
+        target2:= target1 - multi2 //rangePercent < .5 ? close[0] - multi2 : 0.0
     node := node + '\n' + tostring(diff)
 
-
-percentGain := ((target1/close[0]) -1) * 100
+percentGain := target2 > 0.0 ? target2/target1 : target1/close[0]
+percentGain := (percentGain - 1) * 100
+//percentGain := ((target1/close[0]) -1) * 100
 plot(trendMA, title="Trend MA", color = color.white)
 plot(sar, title = "Parabolic SAR", color = trend > 0 ? color.green : color.lime, linewidth = 2, style = plot.style_circles)
 
 
 targetMessage = 'Price Target:\n'
-targetMessage := target2 > 0.0 ? targetMessage + '(1) ' + tostring(truncate(target2,2)) + '\n(2) ' + tostring(truncate(target1,2)) : targetMessage + '(1) ' + tostring(truncate(target1,2))
+targetMessage := target2 > 0.0 ? targetMessage + '(1) ' + tostring(truncate(target1,2)) + '\n(2) ' + tostring(truncate(target2,2)) : targetMessage + '(1) ' + tostring(truncate(target1,2))
 targetMessage := targetMessage + '\nEst %\n~' + tostring(truncate(percentGain,2))
 targetMessage := debug ?  targetMessage + '\nnode: ' + node : targetMessage
 
