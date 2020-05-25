@@ -49,30 +49,30 @@ if trend == 0 and not na(high[1])
     sar := trend > 0 ? low[1] : high[1]
     ep := trend > 0 ? high[1] : low[1]
     af := start
-else 
+else
     nextsar = sar
     if trend > 0
         if high[1] > ep
             ep := high[1]
             af := min(maximum, af + increment)
-            
+
         nextsar := sar + (af * (high[1] - sar))
         nextsar := min(min(low[2],low[1]), nextsar)
-        
+
         //Reversal
         if nextsar >= low
             trend := -1
             nextsar := ep
             ep := low
             af := start
-    else 
+    else
         if low[1] < ep
             ep := low[1]
             af := min(maximum, af + increment)
-        
+
         nextsar := sar + (af * (low[1] - sar))
         nextsar := max(max(high[2],high[1]), nextsar)
-        
+
         //Reversal
         if nextsar <= high
             trend := 1
@@ -80,7 +80,7 @@ else
             ep := high
             af := start
     sar := nextsar
-    
+
 highestHigh := highest(high,21)
 lowestLow := lowest(low,21)
 
@@ -161,14 +161,14 @@ if trend > 0 // bullish, SAR below
             else
                 node := node + 'b'
                 target1 := close[0] - multi2
-    if high[0] > high[1] and low[0] > low[1] and close[0] < high[1] // bullish trigger above SAR (multi directional)
+    if high[0] > high[1] and low[0] > low[1] and close[0] <= high[1] // bullish trigger above SAR (multi directional)
         node:='4'
         target2:= rangePercent > .5 ? close[0] - multi3 : 0.0
-        target1:= close[0] + multi2 
-            
+        target1:= close[0] + multi2
+
     node := node + '\n' + tostring(diff)
     percentGain := target1/close[0]
-    
+
 if trend < 0 // bearish, SAR above
     diff := high[1] - low[0]
     multi1 := diff * 1.618
@@ -194,7 +194,7 @@ if trend < 0 // bearish, SAR above
                     target2 := close[0] - multi2
                     target1 := target2 + multi1
         if close[0] < trendMA[0] // below the trendMA
-            node := node + 'b'            
+            node := node + 'b'
             if consolidation
                 node := node + '+'
                 target1 := close[0] - multi2
@@ -202,7 +202,7 @@ if trend < 0 // bearish, SAR above
                     target2 := close[0] + multi3
                     target1 := target2 - multi2
             if not consolidation
-                node := node + '-'            
+                node := node + '-'
                 target1 := close[0] - multi1
                 if rangePercent <= .25
                     target2 := close[0] + multi2
@@ -228,13 +228,13 @@ if trend < 0 // bearish, SAR above
         if not consolidation
             node := node + '-'
             target1:= bearGap > 0.0 ? close[0] - (multi1 - bearGap) : close[0] - multi1
-    if high[1] > high[0] and low[1] > low[0] and close[0] > low[1]
+    if high[1] > high[0] and low[1] > low[0] and close[0] >= low[1]
         node := '4'
         target1:= rangePercent < .5 ? close[0] + multi3 : close[0] - multi2
         target2:= rangePercent < .5 ? close[0] - multi2 : 0.0
-    node := node + '\n' + tostring(diff)            
+    node := node + '\n' + tostring(diff)
 
-    
+
 percentGain := ((target1/close[0]) -1) * 100
 plot(trendMA, title="Trend MA", color = color.white)
 plot(sar, title = "Parabolic SAR", color = trend > 0 ? color.green : color.lime, linewidth = 2, style = plot.style_circles)
@@ -253,4 +253,3 @@ if change(trend) > 0 and putlabel
     label.new(bar_index, sar, color = target2 > 0.0 ? color.yellow : color.lime, style=label.style_labelup, size = size.normal, text=targetMessage)
 if change(trend) < 0 and putlabel
     label.new(bar_index, sar, color = target2 > 0.0 ? color.yellow : color.red, style=label.style_labeldown, size = size.normal, text=targetMessage)
-
